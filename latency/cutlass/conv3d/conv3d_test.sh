@@ -1,0 +1,4 @@
+# ./tools/profiler/cutlass_profiler --operation=Conv3d --Activation=f16:ndhwc --Filter=f16:ndhwc --Output=f16 --accumulator-type=f32 --n=64 --d=14 --h=56 --w=56 --c=64 --k=64 --t=3 --r=3 --s=3 --output=conv3d_1.csv
+# ./tools/profiler/cutlass_profiler --operation=Conv3d --Activation=f16:ndhwc --Filter=f16:ndhwc --Output=f16 --accumulator-type=f32 --n=64 --d=14 --h=28 --w=28 --c=128 --k=128 --t=3 --r=3 --s=3 --output=conv3d_2.csv
+./tools/profiler/cutlass_profiler --operation=Conv3d --Activation=f16:ndhwc --Filter=f16:ndhwc --Output=f16 --accumulator-type=f32 --n=64 --d=14 --h=14 --w=14 --c=256 --k=256 --t=3 --r=3 --s=3 --output=conv3d_3.csv
+# ./tools/profiler/cutlass_profiler --operation=Conv3d --Activation=f16:ndhwc --Filter=f16:ndhwc --Output=f16 --accumulator-type=f32 --n=64 --d=14 --h=7 --w=7 --c=512 --k=512 --t=3 --r=3 --s=3 --output=conv3d_4.csv
