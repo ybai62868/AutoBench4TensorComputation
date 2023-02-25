@@ -1,7 +1,7 @@
 import time
 import torch
 import torchvision
-import transformers
+# import transformers
 import torch.nn as nn
 from typing import Tuple, List, Dict
 

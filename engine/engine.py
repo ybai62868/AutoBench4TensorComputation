@@ -2,16 +2,30 @@ import os
 import argparse
 from utils import cuda_info
 from tests.torch_model.get_model import model_info
+from typing import List, Optional, Tuple, Union
+# from utils import Tensor
+import torch
 
 os.environ["PATH"] = os.environ["PATH"]+":/usr/local/cuda/bin/"
 
+class BenchResult:
+    def __init__(self, latencies: List[float] = None, outputs: List[torch.Tensor] = None, configs: str = None):
+        self.latencies = latencies
+        self.outputs: Optional[List[torch.Tensor]] = outputs
+        self.configs = configs
 
-def BenchResult:
-	def __init__(self, latencies: List[float]=None, outputs: List[Tensor]=None, configs: str=None):
-		self.latencies = latencies
-		self. outputs: Optional[List[Tensor]] = outputs
-		self.configs = configs
 
+short2long_dict = {
+    'f16': 'float16',
+    'f32': 'float32',
+    'bf16': 'bfloat16'
+}
+
+long2short_dict = {
+	'float16': 'fp16',
+	'float32': 'fp32',
+	'bfloat16': 'bf16'
+}
 
 
 def bench_torch(args, out_dir) -> BenchResult:
@@ -49,12 +63,9 @@ def engine_launch(command_line_args: Optional[str]=None):
 
 
 
-
-
-
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description="auto bench for deep learning frameworks and compilers")
-	parser.add_argument("--model", tpye=str, required=True, help="model name")
+	parser.add_argument("--model", type=str, required=True, help="model name")
 	parser.add_argument("--exec", type=str, choices=["torch", "trt", "onnx", "tvm", "autotvm", "ansor", "tf", "tf_xla"],
 						required=True, help="the exec engine")
 	parser.add_argument("--out", type=str, required=False,

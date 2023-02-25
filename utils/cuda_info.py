@@ -1,19 +1,21 @@
 import os
 import subprocess
-
+from subprocess import PIPE
+from typing import List, Optional, Union
 
 
 def query_gpu(names: Union[List[str], str]):
-	if not instance(names, (List, tuple)):
-		names = [names]
-	results = subprocess.run(f"nvidia-smi -i 0 --query-gpu={",".join(names)} --format=csv, noheader, nounits".split(),
-							std=PIPE, stdout=PIPE, check=True)
-	results = [s.strip() for s in results.stdout.decode("utf-8").split(",")]
+    if not isinstance(names, (list, tuple)):
+        names = [names]
+    result = subprocess.run(f'nvidia-smi -i 0 --query-gpu={",".join(names)} --format=csv,noheader,nounits'.split(),
+                            stdin=PIPE, stdout=PIPE, check=True)
+    results = [s.strip() for s in result.stdout.decode('utf-8').split(',')]
+    if len(results) == 1:
+        return results[0]
+    else:
+        return results
 
-	if len(results) == 1:
-		return results[0]
-	else:
-		return results
+
 
 def query_device_name(short=False) -> str:
 	ret = ""
