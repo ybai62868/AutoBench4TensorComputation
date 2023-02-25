@@ -7,19 +7,19 @@ from typing import Tuple, List, Dict
 
 def model_info(name: str, batch_size: int=1, **kwargs) -> Tuple[nn.Module, Dict[str, torch.Tensor]]:
 	if name == "resnet50":
-		model.torchvision.models.resnet50(pretrained=True).eval().cuda()
+		model = torchvision.models.resnet50(pretrained=True).eval().cuda()
 		inputs = {
 			"x" : torch.randn([batch_size, 3, 224, 224]).cuda()
 		}
 		return model, inputs
 	elif name == "resnet18":
-		model.torchvision.models.resnet18(pretrained=True).eval().cuda()
+		model = torchvision.models.resnet18(pretrained=True).eval().cuda()
 		inputs = {
 			"x" : torch.randn([batch_size, 3, 224, 224]).cuda()
 		}
 		return model, inputs
 	elif name == "resnet101":
-		model.torchvision.models.resnet18(pretrained=True).eval().cuda()
+		model = torchvision.models.resnet18(pretrained=True).eval().cuda()
 		inputs = {
 			"x" : torch.randn([batch_size, 3, 224, 224]).cuda()
 		}
