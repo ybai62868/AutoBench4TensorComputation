@@ -1,4 +1,4 @@
-# Auto-Bench-for-TensorComputation
+# Auto-Bench-for-TensorComputation-Research
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)]
 
 Benchmark scripts for Tensor Compilers and Popular Frameworks
