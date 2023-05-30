@@ -1,16 +1,20 @@
-from autobench import bench 
+from autobench  import bench 
 
 
 def main():
     for exe in [
         '--engine triton',
+        '--engine torch',
+        '--engine autotvm',
+        '--engine ansor',
+        '--engine tvm_ms'
     ]:
         for wk in [
             '--workload gemm',
-            '--workload batch-gemm',
-            '--workload conv1d',
-            '--workload conv2d',
-            '--workload attention', 
+            # '--workload batch-gemm',
+            # '--workload conv1d',
+            # '--workload conv2d',
+            # '--workload attention', 
         ]:
             bench('{} {}'.format(exe, wk))
 
