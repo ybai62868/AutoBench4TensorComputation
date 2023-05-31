@@ -40,17 +40,17 @@ def parse_args():
     return parsed
 
 
-ARGS = parse_args()
+_args = parse_args()
 
 
 def _run_cutlass(instruction: str, workload: str):
-    print("Running:", workload)
+    print("running:", workload)
     logs = subprocess.check_output(instruction, shell=True)
     logs = logs.decode("utf-8")
     logs = logs.split("\n")
     csv_index = logs.index("CSV Results:")
 
-    csv_file = os.path.join(ARGS.log_dir, f"{workload}.csv")
+    csv_file = os.path.join(_args.log_dir, f"{workload}.csv")
     with open(csv_file, "w") as f:
         f.write("\n".join(logs[csv_index + 2 :]))
 
@@ -58,7 +58,7 @@ def _run_cutlass(instruction: str, workload: str):
         [float(log.split(",")[-1]) for log in logs[csv_index + 3 :] if log]
     )
     print(f"{workload}: {max_gflops/1024} TFLOPS")
-    print(f"Full results have been written to {csv_file}")
+    print(f"benchmark results have been written to {csv_file}")
 
 
 def _run_gemm(
@@ -71,7 +71,7 @@ def _run_gemm(
     out_dtype: str,
 ):
     _run_cutlass(
-        f"{ARGS.profiler} --operation=gemm"
+        f"{_args.profiler} --operation=gemm"
         f" --batch_count={b} --m={m} --n={n} --k={k}"
         f" --A=f16:row --B=f16:column --C={out_dtype}"
         f" --accumulator-type={acc_dtype}",
@@ -104,7 +104,7 @@ def _run_conv(
         dilation = (dilation,) * 2
     operation = "Conv2d" if d == 0 else "Conv3d"
     _run_cutlass(
-        f"{ARGS.profiler} --operation={operation} --Activation=f16:nhwc --Filter=f16:nhwc"
+        f"{_args.profiler} --operation={operation} --Activation=f16:nhwc --Filter=f16:nhwc"
         f" --n={n} --h={h} --w={w} --c={ci} --k={co} {f'--d={d}' if d != 0 else ''}"
         f" --r={kernel_size[0]} --s={kernel_size[0]} --pad_h={padding[0]} --pad_w={padding[1]}"
         f" --stride_h={stride[0]} --stride_w={stride[1]}"
@@ -215,17 +215,17 @@ workloads_dict = {
 
 
 def main():
-    print(f"Running benchmarks for {ARGS.workloads}")
-    print(f"Batch size: {ARGS.batch_size}")
-    print(f"Accumulator type: {ARGS.acc_dtype}")
-    print(f"Output type: {ARGS.out_dtype}")
+    print(f"Running benchmarks for {_args.workloads}")
+    print(f"Batch size: {_args.batch_size}")
+    print(f"Accumulator type: {_args.acc_dtype}")
+    print(f"Output type: {_args.out_dtype}")
 
-    for workload in ARGS.workloads:
-        for batch_size in ARGS.batch_size:
+    for workload in _args.workloads:
+        for batch_size in _args.batch_size:
             workloads_dict.get(workload)(
                 batch=batch_size,
-                acc_dtype=ARGS.acc_dtype,
-                out_dtype=ARGS.out_dtype,
+                acc_dtype=_args.acc_dtype,
+                out_dtype=_args.out_dtype,
             )
 
 

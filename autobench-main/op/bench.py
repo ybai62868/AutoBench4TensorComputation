@@ -1,6 +1,6 @@
 import tvm
 from tvm import meta_schedule as ms
-from utils.workloads_fp16 import create_te_workload_f16
+from utils.workloads_fp16 import *
 from utils.util_config import *
 from typing import List, Optional, Tuple, Union
 
@@ -8,26 +8,14 @@ import os
 import json
 import argparse
 from tabulate import tabulate
-
-
+from engine_cutlass import *
+from engine_tvm import *
 from utils import cuda
-
-# from engine_tvm_ansor import ansor_tune
-# from engine_tvm_ms import ms_tune
-# from engine_cutlass import search
-
 
 
 import os
 os.environ["PATH"] = os.environ["PATH"]+":/usr/local/cuda/bin/"
 
-WORKLOADS = [
-    "C1D",
-    "C2D",
-    "C3D",
-    "GEMM-1024-1024-1024",
-    "GEMM-4096-4096-4096",
-]
 
 def environment_info(args) -> str:
     return str(tabulate(
@@ -44,6 +32,12 @@ def environment_info(args) -> str:
         ]
     ))
 
+def cuda_build(mod, target, _params):
+    from tvm.driver import build as tvm_build
+
+    with tvm.transform.PassContext(config={"tir.predicate_opt": True}):
+        return tvm_build(mod, target=target)
+
 
 
 def parse_args():
@@ -56,7 +50,7 @@ def parse_args():
     args.add_argument("--engine", type=str, choices=['tvm_ansor', 'tvm_ms', 'triton', 'cutlass', 'torch', 'nvcublas'], required=True)
     args.add_argument("--batch_size", type=int, default=1)
     args.add_argument("--target", type=str)
-    args.add_argument("--num_trials", type=int, default=100)
+    args.add_argument("--num_trials", type=int, default=1000)
     # args.add_argument("--work_dir", type=str)
     args.add_argument("--log_dir", type=str, default="./results/")
 
@@ -75,7 +69,7 @@ def parse_args():
                       choices=["f16", "f32"], default="f16")
     args.add_argument("--out_dtype", type=str,
                       choices=["f16", "f32"], default="f16")
-    args.add_argument("--cutlass-home", type=str)
+    args.add_argument("--cutlass-home", type=str, default="/home/yangbai/Documents/compiler/cutlass")
     parsed = args.parse_args()
     parsed.cutlass_home = parsed.cutlass_home or os.getenv("CUTLASS_HOME")
     assert (
@@ -119,13 +113,40 @@ def bench_tvm_ansor(args, out_dir):
     pass
 
 def bench_tvm_ms(args, out_dir):
-    pass
+    if args.out_dtype == "f16":
+        args.out_dtype = "float16"
+        from tvm.meta_schedule.testing import tir_tensor_intrin_fp16
+    elif args.out_dtype == "f32":
+        args.out_dtype = "float32"
+        from tvm.meta_schedule.testing import tir_tensor_intrin
+    else:
+        raise Exception("Unsupported dtype")
+    mod = create_te_workload_f16(
+        args.workload, batch_size=args.batch_size, out_dtype=args.out_dtype
+    )
+    print("start tuning with meta schedule ...")
+    sch = ms.tune_tir(
+        mod=mod,
+        target=args.target,
+        config=get_search_config(args.num_trials, args.num_trials),
+        work_dir=out_dir,
+        builder=ms.builder.LocalBuilder(f_build=cuda_build),
+        runner=args.runner,
+        sch_rules=sch_rules_tensor_core,
+        postprocs=postprocs_tensor_core,
+    )
+
+    if sch is None:
+        print("No valid schedule found!")
+        exit()
+    print(sch.mod.script())
+    print(sch.trace)
+
 
 def bench_triton(args, out_dir):
     pass
 
-def bench_cutlass(args, out_dir):
-    pass
+    
 
 def bench_torch(args, out_dir):
     pass
@@ -135,14 +156,11 @@ def bench_nvcublas(args, out_rid):
 
 
 def bench(command_line_args: Optional[str]=None):
-
     args = parse_args()
     print(f"current engine is {args.engine}")
 
     task_name = 'batch_size_{}_{}_{}_input_{}_acc_{}_output_{}'.format(args.batch_size, args.workload, args.engine, args.input_dtype, args.acc_dtype, args.out_dtype)
     print(task_name)
-
-
     bench_dict = {
         "tvm_ansor": bench_tvm_ansor,
         "tvm_ms": bench_tvm_ms,
@@ -154,16 +172,20 @@ def bench(command_line_args: Optional[str]=None):
     bench_func = bench_dict[args.engine]
     out_dir = os.path.join(args.log_dir, cuda.query_device_name(short=True), 'workloads')
 
+
     if args.engine in ["tvm_ms", "tvm_ansor"]:
         trials = args.num_trials
         task_name += "_trials_{}".format(trials)
     out_dir = os.path.join(out_dir, task_name)
     os.makedirs(out_dir, exist_ok=True)
 
+
     with open(os.path.join(out_dir, 'env.txt'), 'w') as f:
         f.write(environment_info(args))
 
-
+    print(out_dir)
+    bench_func(args, out_dir)
+    
 
 
 

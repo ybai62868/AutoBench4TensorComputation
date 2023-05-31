@@ -176,18 +176,18 @@ def conv3d_ndhwc_f16(  # pylint: disable=invalid-name,missing-docstring
 
 def batch_matmul_nkmk_f16(  # pylint: disable=invalid-name,missing-docstring
     B: int,
-    N: int,
     M: int,
+    N: int,
     K: int,
     out_dtype: str = "float32",
 ) -> Tuple[te.Tensor, te.Tensor, te.Tensor]:
-    x = te.placeholder((B, N, K), name="X", dtype="float16")
-    y = te.placeholder((B, M, K), name="Y", dtype="float16")
+    x = te.placeholder((B, M, K), name="X", dtype="float16")
+    y = te.placeholder((B, K, N), name="Y", dtype="float16")
     k = te.reduce_axis((0, K), name="k")
     z = te.compute(
         (B, N, M),
         lambda b, i, j: te.sum(
-            tir.Cast(out_dtype, x[b][i][k]) * tir.Cast(out_dtype, y[b][j][k]),
+            tir.Cast(out_dtype, x[b][i][k]) * tir.Cast(out_dtype, y[b][k][j]),
             axis=[k],
         ),
         name="Z",
@@ -406,6 +406,7 @@ def transpose_batch_matmul_f16(  # pylint: disable=invalid-name,missing-docstrin
     return (query, value, out)
 
 
+
 def create_te_workload_f16(
     name: str,
     batch_size: int = 1,
@@ -416,13 +417,13 @@ def create_te_workload_f16(
     f = te.create_prim_func(workload_func(*param, out_dtype=out_dtype))  # type: ignore
     return f
 
-
 shape_configs = load_config()
+
 
 CONFIGS_F16 = {
     "C1D": conv1d_nlc_f16,
     "C2D": conv2d_nhwc_f16,
     "C3D": conv3d_ndhwc_f16,
-    "GMM-1024": batch_matmul_nkmk_f16,
-    "GMM-4096": batch_matmul_nkmk_f16,
+    "GEMM-1024-1024-1024": batch_matmul_nkmk_f16,
+    "GEMM-4096-4096-4096": batch_matmul_nkmk_f16,
 }

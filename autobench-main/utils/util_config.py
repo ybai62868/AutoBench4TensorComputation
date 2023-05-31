@@ -24,8 +24,16 @@ logging.getLogger("tvm.meta_schedule").setLevel(logging.INFO)
 def load_config():
     cur_path = os.path.dirname(__file__)
     config_path = os.path.join(cur_path, "configs")
+    print(config_path)
     with open(config_path) as f:
         return json.load(f)
+
+def cuda_build(mod, target, _params):
+    from tvm.driver import build as tvm_build
+
+    with tvm.transform.PassContext(config={"tir.predicate_opt": True}):
+        return tvm_build(mod, target=target)
+
 
 
 def sch_rules_tensor_core():

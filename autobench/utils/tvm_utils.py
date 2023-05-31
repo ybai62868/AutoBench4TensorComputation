@@ -72,3 +72,20 @@ def postprocs_tensor_core():
         postproc.RewriteTensorCore(),
         postproc.VerifyGPUCode(),
     ]
+
+
+def get_search_config(n_trails, trails_per_task=2000):
+    return TuneConfig(
+        num_trials_per_iter=64,
+        max_trials_per_task=trails_per_task,
+        max_trials_global=n_trails,
+        search_strategy_config={
+            "population_size": 2048,
+            "init_measured_ratio": 0.2,
+            "init_min_unmeasured": 50,
+            "genetic_num_iters": 3,
+            "genetic_mutate_prob": 0.85,
+            "genetic_max_fail_count": 10,
+            "eps_greedy": 0.05,
+        },
+    )
