@@ -194,3 +194,7 @@ build-release
 *.ncu-rep
 
 # cache for kernel binary
+
+.vscode
+
+results
